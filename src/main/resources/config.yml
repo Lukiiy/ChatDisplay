@@ -1,0 +1,23 @@
+# Position offset
+yPos: 0.5
+
+# Max ticks before despawning (1 second = 20 ticks)
+timeSpan: 100
+
+# Billboard style. Valid values: "fixed", "vertical", "horizontal", "center"
+billBoard: "vertical"
+
+# Background color | Value range: 0-255 | To use the default, set 'red' to -1
+bg:
+  red: -1
+  green: 0
+  blue: 0
+  alpha: 0
+
+shadow: true
+viewRange: 16
+
+opacity:
+  # Value range: 0-1
+  default: 1
+  sneaking: 0.25
