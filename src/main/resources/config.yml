@@ -17,6 +17,11 @@ bg:
 shadow: true
 viewRange: 16
 
+# Some tick updates | Only change this if you know what you're doing.
+tick:
+  update: 2
+  movement: 4
+
 opacity:
   # Value range: 0-1
   default: 1

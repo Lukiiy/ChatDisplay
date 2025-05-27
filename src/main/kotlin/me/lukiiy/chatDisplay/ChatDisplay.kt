@@ -13,6 +13,7 @@ import org.bukkit.entity.TextDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffectType
 import java.util.function.Consumer
@@ -45,6 +46,16 @@ class ChatDisplay : JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun chat(e: AsyncChatEvent) = Bukkit.getGlobalRegionScheduler().execute(this) { doBubble(e.player, e.message()) }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun worldChange(e: PlayerChangedWorldEvent) { // why
+        val p = e.player
+        val bubble = getBubble(p)
+
+        if (bubble != null && !selfDisplays.contains(p)) {
+            p.scheduler.execute(this, { p.hideEntity(this, bubble) }, null, 2L)
+        }
+    }
+
     private fun doBubble(p: Player, msg: Component) {
         if (p.isInvis()) return
 
@@ -73,7 +84,7 @@ class ChatDisplay : JavaPlugin(), Listener {
             it.isSeeThrough = false
             it.isShadowed = config.getBoolean("shadow")
             it.viewRange = config.getDouble("viewRange", 16.0).toFloat()
-            it.teleportDuration = 3
+            it.teleportDuration = config.getInt("tick.movement", 4)
             it.textOpacity = funByte("opacity.default")
             it.billboard = billboard
 
@@ -84,8 +95,8 @@ class ChatDisplay : JavaPlugin(), Listener {
             bubbles.put(p, it)
         }
 
-        Bukkit.getGlobalRegionScheduler().runAtFixedRate(this, Consumer {
-            if (!p.isValid || !display.isValid || p.isInvis() || display.ticksLived > config.getInt("timeSpan")) {
+        p.scheduler.runAtFixedRate(this, Consumer {
+            if (!p.isValid || !display.isValid || p.isInvis() || display.ticksLived > config.getInt("timeSpan", 100)) {
                 it.cancel()
                 display.remove()
                 bubbles.remove(p)
@@ -99,7 +110,7 @@ class ChatDisplay : JavaPlugin(), Listener {
                 if (pRad == p) return@forEach
                 if (!pRad.canSee(p)) pRad.hideEntity(this, display) else pRad.showEntity(this, display)
             }
-        }, 1L, 2L)
+        }, null, 1L, config.getLong("tick.update", 2))
     }
 
     private fun funByte(path: String): Byte = (config.getDouble(path, 1.0).coerceIn(0.0, 1.0) * 255).toInt().toByte()

@@ -1,6 +1,6 @@
 name: ChatDisplay
-version: '1.0'
+version: ${version}
 main: me.lukiiy.chatDisplay.ChatDisplay
 api-version: '1.20'
 authors: [ Lukiiy ]
-description: Chat but with text displays.
+description: Chat bubbles!
