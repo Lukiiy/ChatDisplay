@@ -3,8 +3,6 @@ package me.lukiiy.chatDisplay
 import io.papermc.paper.event.player.AsyncChatEvent
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.TextComponent
-import net.kyori.adventure.text.TextReplacementConfig
 import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.GameMode
@@ -17,9 +15,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffectType
-import java.util.concurrent.ThreadLocalRandom
 import java.util.function.Consumer
-import java.util.regex.Pattern
 
 class ChatDisplay : JavaPlugin(), Listener {
     private val bubbles: MutableMap<Player?, TextDisplay?> = mutableMapOf()
@@ -66,18 +62,18 @@ class ChatDisplay : JavaPlugin(), Listener {
             Display.Billboard.CENTER
         }
 
-        fun spawnLoc(): Location = p.location.add(0.0, p.boundingBox.height + .5, 0.0).apply {
+        fun loc(): Location = p.location.add(0.0, p.boundingBox.height + config.getDouble("yPos"), 0.0).apply {
             yaw = 0f
             pitch = 0f
         }
 
-        val display = p.world.spawn(spawnLoc(), TextDisplay::class.java) {
+        val display = p.world.spawn(loc(), TextDisplay::class.java) {
             it.isPersistent = false
             it.text(msg)
             it.isSeeThrough = false
             it.isShadowed = config.getBoolean("shadow")
             it.viewRange = config.getDouble("viewRange", 16.0).toFloat()
-            it.teleportDuration = 2
+            it.teleportDuration = 3
             it.textOpacity = funByte("opacity.default")
             it.billboard = billboard
 
@@ -85,8 +81,6 @@ class ChatDisplay : JavaPlugin(), Listener {
             if (!it.isDefaultBackground) it.backgroundColor = Color.fromARGB(config.getInt("bg.alpha").coerceIn(0, 255), config.getInt("bg.red").coerceIn(0, 255), config.getInt("bg.green").coerceIn(0, 255), config.getInt("bg.blue").coerceIn(0, 255))
 
             if (!selfDisplays.contains(p)) p.hideEntity(this, it)
-            p.location.getNearbyPlayers(it.viewRange * 1.5).forEach { pRad -> if (!pRad.canSee(p)) pRad.hideEntity(this, it) }
-
             bubbles.put(p, it)
         }
 
@@ -99,7 +93,12 @@ class ChatDisplay : JavaPlugin(), Listener {
             }
 
             display.textOpacity = if (p.isSneaking) funByte("opacity.sneaking") else funByte("opacity.default")
-            display.teleport(spawnLoc())
+            display.teleport(loc())
+
+            p.location.getNearbyPlayers(display.viewRange.toDouble()).forEach { pRad ->
+                if (pRad == p) return@forEach
+                if (!pRad.canSee(p)) pRad.hideEntity(this, display) else pRad.showEntity(this, display)
+            }
         }, 1L, 2L)
     }
 

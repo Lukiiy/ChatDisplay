@@ -1,5 +1,5 @@
 # Position offset
-yPos: 0.5
+yPos: 0.75
 
 # Max ticks before despawning (1 second = 20 ticks)
 timeSpan: 100
