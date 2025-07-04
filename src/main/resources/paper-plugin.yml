@@ -4,3 +4,4 @@ main: me.lukiiy.chatDisplay.ChatDisplay
 api-version: '1.20'
 authors: [ Lukiiy ]
 description: Chat bubbles!
+folia-supported: true

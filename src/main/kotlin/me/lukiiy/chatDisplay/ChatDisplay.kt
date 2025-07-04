@@ -1,30 +1,24 @@
 package me.lukiiy.chatDisplay
 
-import io.papermc.paper.event.player.AsyncChatEvent
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import net.kyori.adventure.text.Component
-import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.entity.Display
 import org.bukkit.entity.Player
 import org.bukkit.entity.TextDisplay
-import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
-import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffectType
 import java.util.function.Consumer
 
-class ChatDisplay : JavaPlugin(), Listener {
+class ChatDisplay : JavaPlugin() {
     private val bubbles: MutableMap<Player?, TextDisplay?> = mutableMapOf()
     private val selfDisplays: MutableSet<Player?> = mutableSetOf()
 
     override fun onEnable() {
         setupConfig()
-        server.pluginManager.registerEvents(this, this)
+        server.pluginManager.registerEvents(Listen(), this)
 
         lifecycleManager.registerEventHandler(LifecycleEvents.COMMANDS) {
             it.registrar().register(Cmd.register(), "ChatDisplay's main command!")
@@ -42,21 +36,8 @@ class ChatDisplay : JavaPlugin(), Listener {
         saveConfig()
     }
 
-    // Listener
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun chat(e: AsyncChatEvent) = Bukkit.getGlobalRegionScheduler().execute(this) { doBubble(e.player, e.message()) }
-
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun worldChange(e: PlayerChangedWorldEvent) { // why
-        val p = e.player
-        val bubble = getBubble(p)
-
-        if (bubble != null && !selfDisplays.contains(p)) {
-            p.scheduler.execute(this, { p.hideEntity(this, bubble) }, null, 2L)
-        }
-    }
-
-    private fun doBubble(p: Player, msg: Component) {
+    // Func
+    fun doBubble(p: Player, msg: Component) {
         if (p.isInvis()) return
 
         if (bubbles.containsKey(p)) {
@@ -104,7 +85,7 @@ class ChatDisplay : JavaPlugin(), Listener {
             }
 
             display.textOpacity = if (p.isSneaking) funByte("opacity.sneaking") else funByte("opacity.default")
-            display.teleport(loc())
+            display.teleportAsync(loc())
 
             p.location.getNearbyPlayers(display.viewRange.toDouble()).forEach { pRad ->
                 if (pRad == p) return@forEach
@@ -119,6 +100,8 @@ class ChatDisplay : JavaPlugin(), Listener {
 
     // API?
     fun getBubble(p: Player): TextDisplay? = bubbles[p]
+
+    fun getSelfDisplay(p: Player): Boolean = selfDisplays.contains(p)
 
     fun toggleSelfDisplay(p: Player): Boolean {
         return when {

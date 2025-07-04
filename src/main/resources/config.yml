@@ -14,8 +14,8 @@ bg:
   blue: 0
   alpha: 0
 
-shadow: true
-viewRange: 16
+shadow: false
+viewRange: 0.5
 
 # Some tick updates | Only change this if you know what you're doing.
 tick:
